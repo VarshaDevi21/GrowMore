@@ -48,9 +48,9 @@ class StateManager:
         elapsed_seconds = time.time() - state.start_time
         max_seconds = state.duration_minutes * 60.0
         
-        if elapsed_seconds > max_seconds and state.status == "ACTIVE":
+        if elapsed_seconds >= max_seconds and state.status == "ACTIVE":
             state.status = "EXPIRED_TIME"
-            logger.warning(f"Session {session_id} expired. Elapsed: {elapsed_seconds:.1f}s > {max_seconds:.1f}s.")
+            logger.warning(f"Session {session_id} expired. Elapsed: {elapsed_seconds:.1f}s >= {max_seconds:.1f}s.")
             return True
         return state.status == "EXPIRED_TIME"
 
