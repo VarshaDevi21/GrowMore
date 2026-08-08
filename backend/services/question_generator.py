@@ -39,6 +39,17 @@ class QuestionGenerator:
             probe_strategy = "DEEP_DIVE"
             last_term = last_eval.technical_terms_detected[0]
 
+        # Force NEW_TOPIC if remaining questions are just enough to hit the min 4 unique days coverage constraint
+        encountered = self.retriever.get_candidate_encountered_days(candidate)
+        num_encountered = len(encountered)
+        unique_covered = len(set(state.covered_days))
+        target_unique = min(4, num_encountered)
+        remaining_questions = 10 - state.question_count
+
+        if remaining_questions <= (target_unique - unique_covered):
+            probe_strategy = "NEW_TOPIC"
+            last_term = ""
+
         # 2. Determine target curriculum day for this turn
         if probe_strategy == "DEEP_DIVE" and state.current_curriculum_day is not None:
             target_day = self.retriever.get_day(state.current_curriculum_day)

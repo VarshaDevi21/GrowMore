@@ -35,6 +35,12 @@ class InterviewEngine:
         # the life of this in-memory session instead of falling back to None.
         self._session_candidates: Dict[str, CandidatePayload] = {}
 
+    async def _get_or_generate_feedback(self, session) -> FeedbackPayload:
+        """Helper to get cached feedback or generate and cache it."""
+        if getattr(session, "feedback", None) is None:
+            session.feedback = await self.feedback_gen.generate_feedback(session)
+        return session.feedback
+
     async def process_turn(self, request: InterviewRequest) -> InterviewResponse:
         """
         Process an incoming turn request for POST /api/interview.
@@ -67,7 +73,7 @@ class InterviewEngine:
 
             q1_text = await self._generate_and_advance(session, candidate_data)
             if not q1_text:
-                feedback = await self.feedback_gen.generate_feedback(session)
+                feedback = await self._get_or_generate_feedback(session)
                 return InterviewResponse(reply="Interview completed.", done=True, feedback=feedback)
 
             logger.info(f"Initialized new session {session_id} for {cand_name}. Question 1 generated.")
@@ -85,12 +91,12 @@ class InterviewEngine:
             # An active state without a candidate cannot safely be evaluated or
             # used to generate a curriculum-grounded question.
             session.status = "COMPLETED"
-            feedback = await self.feedback_gen.generate_feedback(session)
+            feedback = await self._get_or_generate_feedback(session)
             return InterviewResponse(reply="Interview completed.", done=True, feedback=feedback)
 
         # --- FLOW 2: CHECK SESSION STATUS & HARD TERMINAL CONSTRAINTS ---
         if session.status in ["COMPLETED", "FAILED_VIOLATION", "EXPIRED_TIME"]:
-            feedback = await self.feedback_gen.generate_feedback(session)
+            feedback = await self._get_or_generate_feedback(session)
             return InterviewResponse(
                 reply="Interview completed.",
                 done=True,
@@ -100,13 +106,13 @@ class InterviewEngine:
         # A corrupted count must never result in Question 11 or later.
         if session.question_count > 10:
             session.status = "COMPLETED"
-            feedback = await self.feedback_gen.generate_feedback(session)
+            feedback = await self._get_or_generate_feedback(session)
             return InterviewResponse(reply="Interview completed.", done=True, feedback=feedback)
 
         # --- FLOW 3: TIMER EXPIRATION CHECK (20 Mins Max) ---
         if self.sm.check_timer_expired(session_id):
             logger.warning(f"Session {session_id} duration limit exceeded 20 minutes.")
-            feedback = await self.feedback_gen.generate_feedback(session)
+            feedback = await self._get_or_generate_feedback(session)
             return InterviewResponse(
                 reply="Interview completed (Time limit exceeded).",
                 done=True,
@@ -119,7 +125,7 @@ class InterviewEngine:
         if request.violation:
             session, violation_warning = self.sm.record_violation(session_id)
             if session.status == "FAILED_VIOLATION":
-                feedback = await self.feedback_gen.generate_feedback(session)
+                feedback = await self._get_or_generate_feedback(session)
                 return InterviewResponse(
                     reply=violation_warning,
                     done=True,
@@ -137,7 +143,7 @@ class InterviewEngine:
         # --- FLOW 5: EVALUATE CANDIDATE ANSWER ---
         if not session.current_question:
             session.status = "COMPLETED"
-            feedback = await self.feedback_gen.generate_feedback(session)
+            feedback = await self._get_or_generate_feedback(session)
             return InterviewResponse(reply="Interview completed.", done=True, feedback=feedback)
 
         current_day_num = session.current_curriculum_day
@@ -164,8 +170,15 @@ class InterviewEngine:
 
         # --- FLOW 6: HARD CONSTRAINT CHECK — 10 QUESTIONS MAX ---
         if session.question_count >= 10:
+            # Ensure exactly 10 evaluations exist before generating final feedback
+            assert len(session.answer_evaluations) == 10, f"Expected exactly 10 evaluations, found {len(session.answer_evaluations)}"
+            
+            # Analyze complete interview and generate final feedback
+            feedback = await self._get_or_generate_feedback(session)
+            
+            # Mark COMPLETED
             session.status = "COMPLETED"
-            feedback = await self.feedback_gen.generate_feedback(session)
+            
             logger.info(f"Session {session_id} completed after Question 10 evaluation.")
             return InterviewResponse(
                 reply="Interview completed.",
@@ -177,7 +190,7 @@ class InterviewEngine:
         next_q_text = await self._generate_and_advance(session, candidate_obj, last_eval)
         if not next_q_text:
             session.status = "COMPLETED"
-            feedback = await self.feedback_gen.generate_feedback(session)
+            feedback = await self._get_or_generate_feedback(session)
             return InterviewResponse(reply="Interview completed.", done=True, feedback=feedback)
 
         reply_content = next_q_text
@@ -202,6 +215,16 @@ class InterviewEngine:
         probe_strategy = "NEW_TOPIC"
         if last_eval and last_eval.technical_terms_detected:
             probe_strategy = "DEEP_DIVE"
+
+        # Force NEW_TOPIC if remaining questions are just enough to hit the min 4 unique days coverage constraint
+        encountered = self.retriever.get_candidate_encountered_days(candidate)
+        num_encountered = len(encountered)
+        unique_covered = len(set(session.covered_days))
+        target_unique = min(4, num_encountered)
+        remaining_questions = 10 - session.question_count
+
+        if remaining_questions <= (target_unique - unique_covered):
+            probe_strategy = "NEW_TOPIC"
 
         if probe_strategy == "DEEP_DIVE" and session.current_curriculum_day is not None:
             target_day = self.retriever.get_day(session.current_curriculum_day)

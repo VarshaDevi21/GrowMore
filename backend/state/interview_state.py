@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field
 import time
 
@@ -38,3 +38,4 @@ class InterviewState(BaseModel):
     violations_count: int = Field(0, description="Count of violation warnings (3 = fail)")
     answer_evaluations: List[AnswerEvaluation] = Field(default_factory=list, description="Evaluations per turn")
     status: str = Field("ACTIVE", description="ACTIVE | COMPLETED | FAILED_VIOLATION | EXPIRED_TIME")
+    feedback: Optional[Any] = Field(None, description="Cached final feedback payload")

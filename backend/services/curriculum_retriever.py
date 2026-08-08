@@ -118,11 +118,13 @@ class CurriculumRetriever:
                 matched_day = day
                 break
 
-        if matched_day:
-            return f"Day {matched_day.day} — {matched_day.title} — Review objectives: {', '.join(matched_day.objectives[:2])}."
-        
-        # Fallback to general day match if no specific keyword match
-        return f"Curriculum Review — {gap_topic} — Re-examine key concepts and tools related to {gap_topic}."
+        if not matched_day:
+            # Fallback to a real day in the curriculum (Day 11) to avoid inventing day or topic
+            matched_day = self.get_day(11)
+            if not matched_day and self.curriculum.days:
+                matched_day = self.curriculum.days[0]
+
+        return f"Day {matched_day.day} — {matched_day.title} — Review objectives: {', '.join(matched_day.objectives[:2])}."
 
     def get_day_context_summary(self, day_num: int) -> str:
         """Construct a clean string summary of a curriculum day for LLM prompting."""

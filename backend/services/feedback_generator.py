@@ -41,16 +41,17 @@ class FeedbackGenerator:
             for day_num in [7, 11, 22, 28]:
                 day = self.retriever.get_day(day_num)
                 if day:
-                    next_recommendations.append(f"Day {day.day} — {day.title} — Practice advanced objectives.")
+                    next_recommendations.append(f"Day {day.day} — {day.title} — Review objectives: {', '.join(day.objectives[:2])}.")
 
         # Generate summary text using LLM or structured template
         prompt = (
-            f"Generate a 2-3 sentence overall evaluation summary for candidate {state.candidate_name} ({state.candidate_role}).\n"
+            f"Generate a 3-4 sentence overall evaluation summary for candidate {state.candidate_name} ({state.candidate_role}).\n"
+            f"Address overall performance, key strengths, technical skill gaps, and actionable improvement areas.\n"
             f"Total questions evaluated: {len(state.answer_evaluations)}.\n"
             f"Demonstrated concepts: {', '.join(state.mentioned_terms[:5])}.\n"
             f"Identified skill gaps: {', '.join(gaps[:3])}."
         )
-        system_prompt = "You are a lead technical interviewer writing a concise candidate evaluation summary."
+        system_prompt = "You are a lead technical interviewer writing a structured candidate evaluation summary."
 
         try:
             summary_text = await self.llm_provider.generate_completion(
@@ -60,15 +61,18 @@ class FeedbackGenerator:
             )
         except Exception as e:
             logger.error(f"Error generating feedback summary LLM text: {e}")
-            summary_text = (
-                f"{state.candidate_name} completed the technical interview covering {len(state.covered_days)} curriculum topics. "
-                f"Demonstrated strong fundamentals in {', '.join(state.mentioned_terms[:2]) or 'AI Core'} with areas for growth in {', '.join(gaps[:2]) or 'advanced tools'}."
-            )
+            summary_text = ""
 
-        if not summary_text or len(summary_text) < 20:
+        # Use robust template if LLM fails, is too short, or returns mock interviewer dialog
+        if (not summary_text 
+            or len(summary_text) < 20 
+            or "elaborate" in summary_text.lower() 
+            or "thank you for sharing" in summary_text.lower()):
             summary_text = (
-                f"{state.candidate_name} completed the technical interview. "
-                f"Showed proficiency in {', '.join(state.mentioned_terms[:2]) or 'core AI concepts'}."
+                f"Candidate {state.candidate_name} completed the technical interview for the role of {state.candidate_role}, "
+                f"demonstrating solid overall performance across {len(state.covered_days)} curriculum topics. "
+                f"The candidate showed clear strengths in {', '.join(state.mentioned_terms[:2]) or 'core AI concepts'}. "
+                f"To improve further, they should focus on addressing identified gaps in {', '.join(gaps[:2]) or 'advanced tools'}."
             )
 
         return FeedbackPayload(
