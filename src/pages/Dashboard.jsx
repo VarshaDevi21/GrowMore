@@ -15,6 +15,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProfileCard from '../components/ProfileCard';
 import CompletionRate from '../components/CompletionRate';
+import Toast from '../components/Toast';
 import {
   getSelectedCandidateId,
   getCandidateById,
@@ -30,6 +31,7 @@ export const Dashboard = () => {
 
   const [missionFilter, setMissionFilter] = useState('all');
   const [missionSearch, setMissionSearch] = useState('');
+  const [toast, setToast] = useState(null);
 
   if (!candidate) {
     return null;
@@ -37,7 +39,10 @@ export const Dashboard = () => {
 
   const handleCandidateSwitch = (newId) => {
     setSelectedCandidateId(newId);
-    navigate('/dashboard');
+    setToast({
+      message: `Active candidate switched to ${newId}`,
+      type: 'info',
+    });
   };
 
   const missions = candidate.missions || [];
@@ -288,6 +293,8 @@ export const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <Footer />
     </div>

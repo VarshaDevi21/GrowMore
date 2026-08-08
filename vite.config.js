@@ -391,6 +391,7 @@ const generateFinalReport = (candidate, history, violationsCount = 0, difficulty
     ],
     curriculum_days_covered: daysCovered,
     skipped_days: skippedDays,
+    history: history,
     strengths: [
       "Strong grasp of vector database distance metrics and hybrid retrieval strategies",
       "Clear articulation of asynchronous event handling and streaming token delivery in FastAPI",

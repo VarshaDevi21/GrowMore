@@ -235,6 +235,100 @@ export const Report = () => {
           </div>
         </div>
 
+        {/* Feedback Summary Banner if available */}
+        {feedbackSummary && (
+          <div className="card-surface rounded-3xl p-6 shadow-sm border-2 border-[#C9A96E]/40 bg-[#FFFFFF] space-y-2">
+            <div className="flex items-center gap-2 text-xs font-mono uppercase font-bold text-[#C9A96E]">
+              <Sparkles className="w-4 h-4" /> AI Evaluator Summary
+            </div>
+            <p className="text-xs sm:text-sm text-[#050E1A] font-medium leading-relaxed">
+              {feedbackSummary}
+            </p>
+          </div>
+        )}
+
+        {/* Real Turn-by-Turn Response Log Section */}
+        {reportData?.history && reportData.history.length > 0 && (
+          <div className="card-surface rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-[#E2D9C8] space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EFE8DC]">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#071426]" />
+                <h3 className="text-base font-bold text-[#050E1A] font-['Outfit']">
+                  Real Turn-by-Turn Interview Log ({reportData.history.length} Questions Evaluated)
+                </h3>
+              </div>
+              <span className="text-xs font-mono text-[#475569]">
+                Live Session Telemetry
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {reportData.history.map((turn, idx) => {
+                const isSkipped = turn.skipped || turn.answer === '[Question Skipped by Candidate]';
+                const score = turn.evaluation?.score || (isSkipped ? 50 : 85);
+                const scoreColor = score >= 80 ? 'text-[#2E7D32] bg-[#2E7D32]/10 border-[#2E7D32]/30' : score >= 60 ? 'text-[#D97706] bg-[#D97706]/10 border-[#D97706]/30' : 'text-[#DC2626] bg-[#DC2626]/10 border-[#DC2626]/30';
+
+                return (
+                  <div
+                    key={idx}
+                    className="p-5 rounded-2xl bg-[#FAF7F0] border border-[#E2D9C8] space-y-3 font-mono text-xs"
+                  >
+                    {/* Header */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EFE8DC] pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[#050E1A]">
+                          Q{turn.question_number || idx + 1}: Day {turn.curriculum_day || 3} Probe
+                        </span>
+                        {isSkipped && (
+                          <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#D97706]/10 text-[#D97706]">
+                            Skipped
+                          </span>
+                        )}
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-lg border font-bold ${scoreColor}`}>
+                        Score: {score}/100
+                      </span>
+                    </div>
+
+                    {/* Question */}
+                    <div>
+                      <span className="text-[#475569] font-bold block mb-1">INTERVIEWER QUESTION:</span>
+                      <p className="text-[#050E1A] font-sans font-semibold italic">"{turn.question}"</p>
+                    </div>
+
+                    {/* Candidate Answer */}
+                    <div className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E2D9C8]">
+                      <span className="text-[#475569] font-bold block mb-1">CANDIDATE RESPONSE:</span>
+                      <p className="text-[#050E1A] font-sans leading-relaxed">
+                        {turn.answer || '(No response recorded)'}
+                      </p>
+                    </div>
+
+                    {/* Detected Terms / Feedback */}
+                    {turn.evaluation && (
+                      <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-[#475569]">
+                        {turn.evaluation.detected_terms && turn.evaluation.detected_terms.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-[#050E1A]">Keywords Identified:</span>
+                            <span className="text-[#2E7D32] font-bold">
+                              {turn.evaluation.detected_terms.join(', ')}
+                            </span>
+                          </div>
+                        )}
+                        {turn.evaluation.strengths && turn.evaluation.strengths.length > 0 && (
+                          <div className="text-[#2E7D32]">
+                            ✓ {turn.evaluation.strengths[0]}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* What To Study Next Grounded in Curriculum Days */}
         <div className="card-surface rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-[#E2D9C8] space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-[#EFE8DC]">
@@ -273,11 +367,18 @@ export const Report = () => {
         {/* Action Bar */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
           <Link
-            to="/dashboard"
+            to="/track-improve"
             className="px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#071426] hover:bg-[#16345C] text-[#FFFDF7] shadow-md flex items-center gap-2"
           >
-            <span>Return to Candidate Dashboard</span>
+            <span>View Evaluation History</span>
             <ArrowRight className="w-4 h-4 text-[#C9A96E]" />
+          </Link>
+
+          <Link
+            to="/dashboard"
+            className="px-6 py-3.5 rounded-xl font-bold text-xs bg-[#FFFFFF] border border-[#E2D9C8] text-[#050E1A] hover:bg-[#FAF7F0] shadow-sm flex items-center gap-2"
+          >
+            <span>Candidate Dashboard</span>
           </Link>
 
           <Link

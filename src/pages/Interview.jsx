@@ -15,6 +15,7 @@ import {
 import InterviewerAvatar from '../components/InterviewerAvatar';
 import { getSelectedCandidateId, getCandidateById } from '../data/candidate';
 import { postInterviewApi } from '../services/interviewApi';
+import { saveInterviewReportToHistory } from '../services/historyService';
 
 export const Interview = () => {
   const navigate = useNavigate();
@@ -71,8 +72,9 @@ export const Interview = () => {
 
       const finalReportToSave = reportData ? { ...fallbackReport, ...reportData } : fallbackReport;
 
-      // Always persist to localStorage for Report component lookup
+      // Always persist to localStorage for Report component lookup and history tracking
       localStorage.setItem('last_interview_report', JSON.stringify(finalReportToSave));
+      saveInterviewReportToHistory(finalReportToSave);
 
       // Exit fullscreen mode if active
       if (document.fullscreenElement) {

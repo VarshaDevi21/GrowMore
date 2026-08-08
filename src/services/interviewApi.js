@@ -9,10 +9,11 @@ import {
   fetchMcpTools,
   invokeMcpTool,
   runAgenticWorkflow,
+  getAgenticProgress,
   getPhase6Progress,
-} from './phase6Api';
+} from './agenticApi';
 
-export { fetchMcpTools, invokeMcpTool, runAgenticWorkflow, getPhase6Progress };
+export { fetchMcpTools, invokeMcpTool, runAgenticWorkflow, getAgenticProgress, getPhase6Progress };
 
 /**
  * Start an interview session per Technical Spec:

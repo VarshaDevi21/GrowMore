@@ -1,6 +1,6 @@
 /**
- * Phase 6 API Service Layer: Agentic AI & Model Context Protocol (MCP)
- * Interacts with Phase 6 endpoints (/api/phase6/mcp/* and /api/phase6/agent/*)
+ * Agentic AI & Model Context Protocol (MCP) Service Layer
+ * Interacts with MCP server endpoints (/api/mcp/* and /api/agent/*)
  */
 
 import { getCandidateById, getCandidateDayStatus } from '../data/candidate';
@@ -11,7 +11,7 @@ import { getCandidateById, getCandidateDayStatus } from '../data/candidate';
  */
 export const fetchMcpTools = async () => {
   try {
-    const response = await fetch('/api/phase6/mcp/tools', {
+    const response = await fetch('/api/mcp/tools', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +25,7 @@ export const fetchMcpTools = async () => {
     const data = await response.json();
     return data.tools || [];
   } catch (error) {
-    console.warn('Phase 6 API fetchMcpTools network call failed, utilizing local fallback:', error);
+    console.warn('Agentic API fetchMcpTools network call failed, utilizing local fallback:', error);
     return getLocalMcpTools();
   }
 };
@@ -38,7 +38,7 @@ export const fetchMcpTools = async () => {
  */
 export const invokeMcpTool = async (toolName, params = {}) => {
   try {
-    const response = await fetch('/api/phase6/mcp/invoke', {
+    const response = await fetch('/api/mcp/invoke', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export const invokeMcpTool = async (toolName, params = {}) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.warn(`Phase 6 API invokeMcpTool (${toolName}) fallback engaged:`, error);
+    console.warn(`Agentic API invokeMcpTool (${toolName}) fallback engaged:`, error);
     return executeLocalMcpToolFallback(toolName, params);
   }
 };
@@ -74,7 +74,7 @@ export const invokeMcpTool = async (toolName, params = {}) => {
  */
 export const runAgenticWorkflow = async (taskPrompt, candidateId) => {
   try {
-    const response = await fetch('/api/phase6/agent/orchestrate', {
+    const response = await fetch('/api/agent/orchestrate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -93,40 +93,43 @@ export const runAgenticWorkflow = async (taskPrompt, candidateId) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.warn('Phase 6 API runAgenticWorkflow fallback engaged:', error);
+    console.warn('Agentic API runAgenticWorkflow fallback engaged:', error);
     return executeLocalAgenticWorkflowFallback(taskPrompt, candidateId);
   }
 };
 
 /**
- * Extract candidate status telemetry for Module 6 / Phase 6 (Days 21–24)
+ * Extract candidate status telemetry for Module 6 (Days 21–24)
  * @param {string} candidateId - Candidate ID (e.g. 'CAND-001')
- * @returns {object} Phase 6 progress telemetry object
+ * @returns {object} Module 6 progress telemetry object
  */
-export const getPhase6Progress = (candidateId) => {
+export const getAgenticProgress = (candidateId) => {
   const candidate = getCandidateById(candidateId);
   if (!candidate) return null;
 
-  const phase6Days = [21, 22, 23, 24];
-  const dayStatuses = phase6Days.map((d) => ({
+  const agenticDays = [21, 22, 23, 24];
+  const dayStatuses = agenticDays.map((d) => ({
     day: d,
     status: getCandidateDayStatus(candidate, d),
     mission: candidate.missions ? candidate.missions.find((m) => m.day === d) || null : null,
   }));
 
   const completedCount = dayStatuses.filter((d) => d.status === 'completed').length;
-  const isPhase6Complete = completedCount === phase6Days.length;
+  const isComplete = completedCount === agenticDays.length;
 
   return {
     moduleNumber: 6,
     moduleTitle: 'Agentic AI & MCP',
-    daysCovered: phase6Days,
+    daysCovered: agenticDays,
     completedCount,
-    totalDays: phase6Days.length,
-    isComplete: isPhase6Complete,
+    totalDays: agenticDays.length,
+    isComplete,
     dayDetails: dayStatuses,
   };
 };
+
+// Alias for backward compatibility
+export const getPhase6Progress = getAgenticProgress;
 
 /* ==========================================================================
    LOCAL FALLBACK ENGINE FOR OFFLINE / RESILIENT OPERATION
@@ -191,7 +194,7 @@ const executeLocalMcpToolFallback = (toolName, params) => {
   if (!found) {
     return {
       jsonrpc: '2.0',
-      error: { code: -32601, message: `Tool '${toolName}' not registered on Phase 6 MCP Server` },
+      error: { code: -32601, message: `Tool '${toolName}' not registered on Agentic MCP Server` },
     };
   }
 
@@ -202,10 +205,10 @@ const executeLocalMcpToolFallback = (toolName, params) => {
       tool: toolName,
       status: 'executed_in_sandbox',
       output: {
-        message: `Successfully executed ${toolName} within isolated Phase 6 sandbox`,
+        message: `Successfully executed ${toolName} within isolated Agentic sandbox`,
         parameters_received: params,
         execution_timestamp: new Date().toISOString(),
-        verified_by: 'Phase 6 Local Fallback Engine',
+        verified_by: 'Agentic Local Fallback Engine',
       },
       execution_time_ms: 18,
     },
