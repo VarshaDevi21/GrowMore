@@ -199,11 +199,18 @@ class InterviewEngine:
         if session.question_count >= 10 or session.status != "ACTIVE":
             return None
 
-        target_day = self.retriever.select_next_probing_day(
-            candidate=candidate,
-            covered_days=session.covered_days,
-            demonstrated_gaps=session.skill_gaps,
-        )
+        probe_strategy = "NEW_TOPIC"
+        if last_eval and last_eval.technical_terms_detected:
+            probe_strategy = "DEEP_DIVE"
+
+        if probe_strategy == "DEEP_DIVE" and session.current_curriculum_day is not None:
+            target_day = self.retriever.get_day(session.current_curriculum_day)
+        else:
+            target_day = self.retriever.select_next_probing_day(
+                candidate=candidate,
+                covered_days=session.covered_days,
+                demonstrated_gaps=session.skill_gaps,
+            )
         target_day_num = target_day.day if target_day else None
         target_topic = target_day.title if target_day else ""
 
