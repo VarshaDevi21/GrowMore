@@ -1,0 +1,38 @@
+from typing import List, Optional
+from pydantic import BaseModel, Field
+import time
+
+class AnswerEvaluation(BaseModel):
+    question_number: int = Field(..., description="1-indexed question number (1..10)")
+    question_text: str = Field(..., description="Text of the question asked")
+    candidate_answer: str = Field(..., description="Candidate's raw response text")
+    completeness_score: float = Field(..., ge=0.0, le=1.0, description="Completeness score (0 to 1)")
+    accuracy_score: float = Field(..., ge=0.0, le=1.0, description="Technical accuracy score (0 to 1)")
+    logic_score: float = Field(..., ge=0.0, le=1.0, description="Structure & logic score (0 to 1)")
+    tone_clarity_score: float = Field(..., ge=0.0, le=1.0, description="Grammar & clarity score (0 to 1)")
+    time_mgmt_score: float = Field(..., ge=0.0, le=1.0, description="Time management score (0 to 1)")
+    classification: str = Field(..., description="Strong | Partial | Weak")
+    technical_terms_detected: List[str] = Field(default_factory=list, description="Extracted tech terms")
+    missing_concepts: List[str] = Field(default_factory=list, description="Missed technical concepts")
+    incorrect_concepts: List[str] = Field(default_factory=list, description="Incorrect technical concepts")
+    recommended_difficulty: str = Field(..., description="Recommended difficulty for next turn")
+
+class InterviewState(BaseModel):
+    session_id: str = Field(..., description="Unique session ID")
+    candidate_id: str = Field(..., description="Candidate ID e.g. CAND-001")
+    candidate_name: str = Field(..., description="Candidate full name")
+    candidate_role: str = Field(..., description="Candidate job role")
+    level: str = Field("Medium", description="Easy | Medium | Hard starting difficulty")
+    start_time: float = Field(default_factory=time.time, description="Unix timestamp of start time")
+    duration_minutes: float = Field(20.0, description="Maximum duration allowed in minutes")
+    question_count: int = Field(0, description="Current number of questions completed (0..10)")
+    current_question: str = Field("", description="Current active question text")
+    covered_days: List[int] = Field(default_factory=list, description="Curriculum day numbers covered so far")
+    covered_topics: List[str] = Field(default_factory=list, description="Curriculum day titles covered so far")
+    mentioned_terms: List[str] = Field(default_factory=list, description="All technical terms mentioned")
+    strengths: List[str] = Field(default_factory=list, description="Accumulated strengths")
+    weaknesses: List[str] = Field(default_factory=list, description="Accumulated weaknesses")
+    skill_gaps: List[str] = Field(default_factory=list, description="Accumulated skill gaps")
+    violations_count: int = Field(0, description="Count of violation warnings (3 = fail)")
+    answer_evaluations: List[AnswerEvaluation] = Field(default_factory=list, description="Evaluations per turn")
+    status: str = Field("ACTIVE", description="ACTIVE | COMPLETED | FAILED_VIOLATION | EXPIRED_TIME")
