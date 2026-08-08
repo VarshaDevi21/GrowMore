@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
 from core.config import settings
+from models.schemas import InterviewRequest, InterviewResponse
+from services.interview_engine import interview_engine
 
 # Configure logging
 logging.basicConfig(
@@ -26,6 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Basic health check endpoint."""
@@ -35,6 +38,27 @@ async def health_check():
         "version": "1.0.0",
         "environment": settings.ENVIRONMENT
     }
+
+@app.post("/api/interview", response_model=InterviewResponse, tags=["Interview"])
+async def handle_interview_turn(request: InterviewRequest):
+    """
+    Process a single interview turn.
+    Initiates the session or evaluates the candidate's response.
+    """
+    try:
+        response = await interview_engine.process_turn(request)
+        return response
+    except HTTPException as http_exc:
+        # Re-raise explicit HTTP exceptions if any are thrown
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Unhandled error in handle_interview_turn: {e}", exc_info=True)
+        # Avoid leaking internal stack trace or secrets
+        raise HTTPException(
+            status_code=500,
+            detail="An internal error occurred while processing the interview turn."
+        )
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
