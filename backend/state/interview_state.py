@@ -27,6 +27,8 @@ class InterviewState(BaseModel):
     duration_minutes: float = Field(20.0, description="Maximum duration allowed in minutes")
     question_count: int = Field(0, description="Current number of questions completed (0..10)")
     current_question: str = Field("", description="Current active question text")
+    current_curriculum_day: Optional[int] = Field(None, description="Curriculum day targeted by the active question")
+    current_curriculum_topic: str = Field("", description="Curriculum topic targeted by the active question")
     covered_days: List[int] = Field(default_factory=list, description="Curriculum day numbers covered so far")
     covered_topics: List[str] = Field(default_factory=list, description="Curriculum day titles covered so far")
     mentioned_terms: List[str] = Field(default_factory=list, description="All technical terms mentioned")

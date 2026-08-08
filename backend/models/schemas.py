@@ -58,6 +58,7 @@ class InterviewRequest(BaseModel):
     sessionId: str = Field(..., description="Session identifier for interview state tracking")
     candidate: Optional[CandidatePayload] = Field(None, description="Candidate data payload on start turn")
     message: Optional[str] = Field(None, description="Candidate response text on turn 1..10")
+    violation: bool = Field(False, description="Whether an interview-integrity violation was detected")
 
 class FeedbackPayload(BaseModel):
     summary: str = Field(..., description="Overall evaluation summary text")

@@ -95,6 +95,21 @@ class StateManager:
         logger.info(f"Session {session_id} advanced to Question {state.question_count}/10.")
         return state
 
+    def set_current_curriculum_context(
+        self,
+        session_id: str,
+        day: Optional[int],
+        topic: str = ""
+    ) -> InterviewState:
+        """Associate the active question with the curriculum day it probes."""
+        state = self.get_session(session_id)
+        if not state:
+            raise ValueError(f"Session {session_id} not found.")
+
+        state.current_curriculum_day = day
+        state.current_curriculum_topic = topic
+        return state
+
     def record_evaluation(
         self,
         session_id: str,
