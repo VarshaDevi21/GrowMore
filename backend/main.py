@@ -23,8 +23,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://grow-more-km9yzfi2m-growmore-interview.vercel.app/",
-        "https://growmore-interview.up.railway.app",
+        "https://grow-more-gules.vercel.app/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
