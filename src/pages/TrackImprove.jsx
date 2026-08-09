@@ -120,34 +120,39 @@ export const TrackImprove = () => {
     return pastAttempts;
   }, [pastAttempts, historyFilter]);
 
+  const latestEvaluation = useMemo(() => pastAttempts[0] || null, [pastAttempts]);
+
   // Skill Mastery by Module
   const moduleMastery = useMemo(() => {
-    // Dynamically score based on past attempts if available
     const avgScore = pastAttempts.length
       ? Math.round(pastAttempts.reduce((acc, curr) => acc + curr.score, 0) / pastAttempts.length)
-      : 85;
+      : Math.min(100, Math.round((candidate.signals.missionsCompleted / 31) * 100));
+
+    const baseScore = Math.max(55, Math.min(95, avgScore + 4));
 
     return [
-      { id: 1, title: 'Environment & Tooling', days: 'Days 1–3', score: Math.min(98, avgScore + 6), status: 'Mastered' },
-      { id: 2, title: 'Data Foundations', days: 'Days 4–6', score: Math.min(95, avgScore + 3), status: 'Proficient' },
-      { id: 3, title: 'Embeddings & Vector Search', days: 'Days 7–10', score: Math.min(92, avgScore), status: 'Proficient' },
-      { id: 4, title: 'LLM Core & Prompting', days: 'Days 11–15', score: Math.min(96, avgScore + 4), status: 'Mastered' },
-      { id: 5, title: 'Chatbot Application Build', days: 'Days 16–20', score: Math.max(75, avgScore - 4), status: 'Proficient' },
-      { id: 6, title: 'Agentic AI & MCP', days: 'Days 21–24', score: Math.min(94, avgScore + 2), status: 'Mastered' },
-      { id: 7, title: 'Security & Deployment', days: 'Days 25–28', score: Math.max(70, avgScore - 8), status: 'Developing' },
-      { id: 8, title: 'Production & Capstone', days: 'Days 29–31', score: Math.min(90, avgScore - 1), status: 'Proficient' },
+      { id: 1, title: 'Environment & Tooling', days: 'Days 1–3', score: Math.min(98, baseScore + 3), status: baseScore >= 80 ? 'Mastered' : 'Developing' },
+      { id: 2, title: 'Data Foundations', days: 'Days 4–6', score: Math.min(95, baseScore + 1), status: baseScore >= 75 ? 'Proficient' : 'Developing' },
+      { id: 3, title: 'Embeddings & Vector Search', days: 'Days 7–10', score: Math.min(92, baseScore - 1), status: baseScore >= 70 ? 'Proficient' : 'Developing' },
+      { id: 4, title: 'LLM Core & Prompting', days: 'Days 11–15', score: Math.min(96, baseScore + 2), status: baseScore >= 80 ? 'Mastered' : 'Proficient' },
+      { id: 5, title: 'Chatbot Application Build', days: 'Days 16–20', score: Math.max(60, baseScore - 4), status: baseScore >= 75 ? 'Proficient' : 'Developing' },
+      { id: 6, title: 'Agentic AI & MCP', days: 'Days 21–24', score: Math.min(94, baseScore + 1), status: baseScore >= 80 ? 'Mastered' : 'Proficient' },
+      { id: 7, title: 'Security & Deployment', days: 'Days 25–28', score: Math.max(58, baseScore - 8), status: baseScore >= 70 ? 'Developing' : 'Needs Work' },
+      { id: 8, title: 'Production & Capstone', days: 'Days 29–31', score: Math.min(90, baseScore - 2), status: baseScore >= 75 ? 'Proficient' : 'Developing' },
     ];
-  }, [pastAttempts]);
+  }, [pastAttempts, candidate.signals.missionsCompleted]);
 
-  const actionItems = useMemo(
-    () => [
-      { id: 'act-1', day: 10, title: 'Practice SQLite Full-Text + ChromaDB RRF Fusion', area: 'Embeddings & Vectors' },
-      { id: 'act-2', day: 23, title: 'Build custom MCP tool server with Pydantic validation', area: 'Agentic AI & MCP' },
-      { id: 'act-3', day: 28, title: 'Audit gVisor / Wasm container security guardrails', area: 'Security & Deployment' },
-      { id: 'act-4', day: 18, title: 'Optimize FastAPI WebSockets token backpressure handling', area: 'Chatbot Architecture' },
-    ],
-    []
-  );
+  const actionItems = useMemo(() => {
+    const recommendations = latestEvaluation?.next || [];
+    if (!recommendations.length) return [];
+
+    return recommendations.map((item, index) => ({
+      id: `act-${index + 1}`,
+      day: (latestEvaluation?.daysCovered?.[0] || 1) + index * 3,
+      title: item,
+      area: 'Latest evaluation guidance',
+    }));
+  }, [latestEvaluation]);
 
   if (!candidate) {
     return (
@@ -264,6 +269,42 @@ export const TrackImprove = () => {
             </span>
           </div>
         </div>
+
+        {latestEvaluation && (
+          <div className="card-surface rounded-3xl p-6 sm:p-7 shadow-sm border-2 border-[#C9A96E]/40 bg-[#FFFFFF] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-mono uppercase font-bold text-[#C9A96E]">Latest backend-backed evaluation</p>
+                <h2 className="text-xl font-black text-[#050E1A] font-['Outfit']">
+                  {latestEvaluation.summary || 'Live interview feedback is ready'}
+                </h2>
+              </div>
+              <div className="rounded-2xl bg-[#071426] text-[#FFFDF7] px-4 py-3 text-center min-w-[96px]">
+                <div className="text-2xl font-black font-mono">{latestEvaluation.score}</div>
+                <div className="text-[10px] uppercase tracking-wide text-[#C9A96E]">score</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {latestEvaluation.strengths?.slice(0, 3).map((strength, index) => (
+                <span key={`${strength}-${index}`} className="px-3 py-1.5 rounded-full bg-[#FAF7F0] border border-[#E2D9C8] text-[11px] font-semibold text-[#050E1A]">
+                  {strength}
+                </span>
+              ))}
+            </div>
+
+            {latestEvaluation.next?.length > 0 && (
+              <div className="rounded-2xl border border-[#E2D9C8] bg-[#FAF7F0] p-4 space-y-2">
+                <p className="text-[11px] font-mono uppercase font-bold text-[#475569]">Recommended next focus</p>
+                <ul className="space-y-1.5">
+                  {latestEvaluation.next.slice(0, 3).map((item, index) => (
+                    <li key={`${item}-${index}`} className="text-sm text-[#050E1A] font-medium">• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex border-b-2 border-[#E2D9C8] gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Telemetry Navigation Tabs">

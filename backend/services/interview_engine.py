@@ -79,7 +79,12 @@ class InterviewEngine:
             logger.info(f"Initialized new session {session_id} for {cand_name}. Question 1 generated.")
             return InterviewResponse(
                 reply=f"Welcome. Let's begin your interview.\n\n{q1_text}",
-                done=False
+                done=False,
+                question=q1_text,
+                question_number=1,
+                curriculum_day=session.current_curriculum_day,
+                curriculum_topic=session.current_curriculum_topic,
+                difficulty=session.level,
             )
 
         # Retrieve candidate object for active session
@@ -183,7 +188,12 @@ class InterviewEngine:
             return InterviewResponse(
                 reply="Interview completed.",
                 done=True,
-                feedback=feedback
+                feedback=feedback,
+                question=session.current_question,
+                question_number=session.question_count,
+                curriculum_day=session.current_curriculum_day,
+                curriculum_topic=session.current_curriculum_topic,
+                difficulty=session.level,
             )
 
         # --- FLOW 7: GENERATE NEXT QUESTION (Question N+1) ---
@@ -199,7 +209,12 @@ class InterviewEngine:
 
         return InterviewResponse(
             reply=reply_content,
-            done=False
+            done=False,
+            question=next_q_text,
+            question_number=session.question_count,
+            curriculum_day=session.current_curriculum_day,
+            curriculum_topic=session.current_curriculum_topic,
+            difficulty=session.level,
         )
 
     async def _generate_and_advance(
