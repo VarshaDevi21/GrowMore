@@ -19,11 +19,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration for React Frontend
+# CORS Configuration for frontend deployments and local development
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://grow-more-6uygaqeuk-growmore-interview.vercel.app/",
+        "https://grow-more-km9yzfi2m-growmore-interview.vercel.app/",
+        "https://growmore-interview.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
