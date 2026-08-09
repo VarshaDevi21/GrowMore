@@ -32,21 +32,22 @@ export const Report = () => {
   if (!candidate) return null;
 
   const candidateName = reportData?.candidate_name || candidate.member.name;
-  const overallScore = reportData?.overall_score || reportData?.report?.overall_score || 0;
+  const backendFeedback = reportData?.feedback || reportData?.report?.feedback || null;
+  const overallScore = backendFeedback?.overall_score ?? reportData?.overall_score ?? reportData?.report?.overall_score ?? 0;
   const daysCovered = reportData?.curriculum_days_covered || reportData?.report?.curriculum_days_covered || [];
   const historyTurns = reportData?.history || reportData?.report?.history || [];
 
-  const dimensions = (reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || []).length > 0
-    ? (reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || [])
+  const dimensions = (backendFeedback?.evaluation_dimensions || reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || []).length > 0
+    ? (backendFeedback?.evaluation_dimensions || reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || [])
     : [];
 
-  const feedbackSummary = reportData?.feedback?.summary || reportData?.report?.feedback?.summary || reportData?.report?.summary;
+  const feedbackSummary = backendFeedback?.summary || reportData?.report?.summary || reportData?.summary;
 
-  const strengths = reportData?.feedback?.strengths || reportData?.strengths || reportData?.report?.feedback?.strengths || reportData?.report?.strengths || [];
+  const strengths = backendFeedback?.strengths || reportData?.strengths || reportData?.report?.strengths || [];
 
-  const skillGaps = reportData?.feedback?.gaps || reportData?.skill_gaps || reportData?.report?.feedback?.gaps || reportData?.report?.skill_gaps || [];
+  const skillGaps = backendFeedback?.gaps || reportData?.skill_gaps || reportData?.report?.skill_gaps || [];
 
-  const rawNext = reportData?.feedback?.next || reportData?.recommended_next_steps || reportData?.report?.feedback?.next || reportData?.report?.recommended_next_steps;
+  const rawNext = backendFeedback?.next || reportData?.recommended_next_steps || reportData?.report?.recommended_next_steps;
   const studyRecommendations = Array.isArray(rawNext)
     ? rawNext.map((item, idx) => {
         if (typeof item === 'string') {

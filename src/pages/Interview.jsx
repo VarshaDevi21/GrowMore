@@ -44,6 +44,7 @@ export const Interview = () => {
 
   const buildReportPayloadForStorage = useCallback(
     (reportData = {}, extra = {}) => {
+      const backendFeedback = reportData?.feedback || reportData?.report?.feedback || null;
       const historyEntries = Array.isArray(reportData?.history) ? reportData.history : (Array.isArray(reportData?.report?.history) ? reportData.report.history : []);
       const curriculumDayValues = Array.from(
         new Set(historyEntries.map((turn) => turn.curriculum_day).filter(Boolean))
@@ -62,10 +63,11 @@ export const Interview = () => {
       if (reportData?.sessionId) payload.sessionId = reportData.sessionId;
       if (reportData?.completed_at) payload.completed_at = reportData.completed_at;
       if (reportData?.termination_reason) payload.termination_reason = reportData.termination_reason;
-      if (reportData?.overall_score != null) payload.overall_score = reportData.overall_score;
-      if (reportData?.feedback) payload.feedback = reportData.feedback;
-      if (reportData?.evaluation_dimensions) payload.evaluation_dimensions = reportData.evaluation_dimensions;
+      if (backendFeedback?.overall_score != null) payload.overall_score = backendFeedback.overall_score;
+      if (backendFeedback) payload.feedback = backendFeedback;
+      if (backendFeedback?.evaluation_dimensions?.length) payload.evaluation_dimensions = backendFeedback.evaluation_dimensions;
       if (reportData?.report) payload.report = reportData.report;
+      if (reportData?.evaluation) payload.evaluation = reportData.evaluation;
 
       return payload;
     },
@@ -388,6 +390,7 @@ export const Interview = () => {
         setCurrentQuestionData({
           ...response,
           question: response.question || response.reply,
+          curriculum_day: response.curriculum_day || currentQuestionData?.curriculum_day,
         });
         setQuestionNumber(response.question_number || questionNumber + 1);
         setAnswerText('');
@@ -466,6 +469,7 @@ export const Interview = () => {
         setCurrentQuestionData({
           ...response,
           question: response.question || response.reply,
+          curriculum_day: response.curriculum_day || currentQuestionData?.curriculum_day,
         });
         setQuestionNumber(response.question_number || questionNumber + 1);
         setAnswerText('');

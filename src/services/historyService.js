@@ -80,7 +80,7 @@ export const saveInterviewReportToHistory = (report) => {
 const formatReportToHistoryItem = (report) => {
   const reportPayload = report.report || report;
   const feedback = reportPayload.feedback || report.feedback || {};
-  const score = reportPayload.overall_score ?? report.overall_score ?? reportPayload.score ?? report.score ?? 0;
+  const score = feedback.overall_score ?? reportPayload.overall_score ?? report.overall_score ?? reportPayload.score ?? report.score ?? 0;
   return {
     id: reportPayload.sessionId || report.sessionId || reportPayload.id || report.id || `attempt-${Date.now()}`,
     candidate_id: reportPayload.candidate_id || report.candidate_id || reportPayload.candidateId || report.candidateId || 'CAND-001',

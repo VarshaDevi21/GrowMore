@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 # --- Curriculum Schemas ---
@@ -65,8 +65,16 @@ class FeedbackPayload(BaseModel):
     strengths: List[str] = Field(default_factory=list, description="List of candidate strengths")
     gaps: List[str] = Field(default_factory=list, description="List of identified skill gaps")
     next: List[str] = Field(default_factory=list, description="Actionable curriculum recommendations")
+    overall_score: Optional[float] = Field(None, description="Overall interview score from 0 to 100")
+    evaluation_dimensions: List[Dict[str, Any]] = Field(default_factory=list, description="Structured evaluation dimensions")
 
 class InterviewResponse(BaseModel):
     reply: str = Field(..., description="Interviewer question or response text")
     done: bool = Field(False, description="Whether interview is finished")
     feedback: Optional[FeedbackPayload] = Field(None, description="Final feedback payload if done=True")
+    question: Optional[str] = Field(None, description="The active interview question to present to the user")
+    question_number: Optional[int] = Field(None, description="The current question number for the session")
+    curriculum_day: Optional[int] = Field(None, description="Curriculum day associated with the active question")
+    curriculum_topic: Optional[str] = Field(None, description="Curriculum topic associated with the active question")
+    difficulty: Optional[str] = Field(None, description="Current interview difficulty tier")
+    evaluation: Optional[Dict[str, Any]] = Field(None, description="Per-turn evaluation payload for the latest answer")
