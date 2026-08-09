@@ -22,11 +22,27 @@ app = FastAPI(
 # CORS Configuration for React Frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust in production as needed
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", tags=["Health"])
+async def root():
+    """Root endpoint for basic server reachability."""
+    return {
+        "status": "ok",
+        "message": "AI Interview Agent Backend is running",
+        "health": "/health",
+        "interview_api": "/api/interview",
+    }
 
 
 @app.get("/health", tags=["Health"])

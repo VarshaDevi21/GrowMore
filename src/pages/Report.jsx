@@ -32,75 +32,29 @@ export const Report = () => {
   if (!candidate) return null;
 
   const candidateName = reportData?.candidate_name || candidate.member.name;
-  const overallScore = reportData?.overall_score || reportData?.report?.overall_score || 88;
-  const daysCovered = reportData?.curriculum_days_covered || reportData?.report?.curriculum_days_covered || [3, 5, 7, 10, 13, 15, 18, 20, 23, 28];
+  const overallScore = reportData?.overall_score || reportData?.report?.overall_score || 0;
+  const daysCovered = reportData?.curriculum_days_covered || reportData?.report?.curriculum_days_covered || [];
+  const historyTurns = reportData?.history || reportData?.report?.history || [];
 
-  const dimensions = reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || [
-    {
-      name: 'Technical Depth',
-      score: 89,
-      description: 'Command of vectors, FastAPI concurrency, and MCP protocol architecture',
-    },
-    {
-      name: 'System Reasoning',
-      score: 86,
-      description: 'Ability to articulate trade-offs between latency, accuracy, and memory',
-    },
-    {
-      name: 'Curriculum Mastery',
-      score: 93,
-      description: `Verified recall across ${daysCovered.length} distinct curriculum days`,
-    },
-    {
-      name: 'Communication & Structure',
-      score: 87,
-      description: 'Clarity of technical explanations and structured design walkthroughs',
-    },
-    {
-      name: 'Production Readiness',
-      score: 85,
-      description: 'Knowledge of containerization, security guardrails, and error handling',
-    },
-  ];
+  const dimensions = (reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || []).length > 0
+    ? (reportData?.evaluation_dimensions || reportData?.report?.evaluation_dimensions || [])
+    : [];
 
-  const feedbackSummary = reportData?.feedback?.summary || reportData?.report?.summary;
+  const feedbackSummary = reportData?.feedback?.summary || reportData?.report?.feedback?.summary || reportData?.report?.summary;
 
-  const strengths = reportData?.feedback?.strengths || reportData?.strengths || reportData?.report?.strengths || [
-    'Strong grasp of vector database distance metrics and hybrid retrieval strategies',
-    'Clear articulation of asynchronous event handling and streaming token delivery in FastAPI',
-    'Solid understanding of Model Context Protocol (MCP) tool decoupling',
-  ];
+  const strengths = reportData?.feedback?.strengths || reportData?.strengths || reportData?.report?.feedback?.strengths || reportData?.report?.strengths || [];
 
-  const skillGaps = reportData?.feedback?.gaps || reportData?.skill_gaps || reportData?.report?.skill_gaps || [
-    'Deepen understanding of reciprocal rank fusion (RRF) smoothing constants in Day 10',
-    'Review Docker container isolation policies and AST schema healing under edge-case inputs',
-  ];
+  const skillGaps = reportData?.feedback?.gaps || reportData?.skill_gaps || reportData?.report?.feedback?.gaps || reportData?.report?.skill_gaps || [];
 
-  const rawNext = reportData?.feedback?.next || reportData?.recommended_next_steps || reportData?.report?.recommended_next_steps;
+  const rawNext = reportData?.feedback?.next || reportData?.recommended_next_steps || reportData?.report?.feedback?.next || reportData?.report?.recommended_next_steps;
   const studyRecommendations = Array.isArray(rawNext)
     ? rawNext.map((item, idx) => {
         if (typeof item === 'string') {
-          return { day: 10 + idx * 5, title: 'Curriculum Recommendation', action: item };
+          return { day: (daysCovered[0] || 10) + idx * 3, title: 'Curriculum Recommendation', action: item };
         }
         return item;
       })
-    : [
-        {
-          day: 10,
-          title: 'Hybrid Search & Retrieval Optimization',
-          action: 'Revisit SQLite full-text search indexing combined with ChromaDB dense embeddings.',
-        },
-        {
-          day: 23,
-          title: 'Model Context Protocol (MCP) Server Architecture',
-          action: 'Practice building custom MCP tools with strict Pydantic schema validation.',
-        },
-        {
-          day: 28,
-          title: 'Production Guardrails & Container Security',
-          action: 'Strengthen prompt injection defenses and least-privilege Docker runtime execution.',
-        },
-      ];
+    : [];
 
   return (
     <div className="min-h-screen bg-[#FAF7F0] text-[#050E1A] flex flex-col selection:bg-[#C9A96E] selection:text-[#071426]">
@@ -177,23 +131,29 @@ export const Report = () => {
             <Sparkles className="w-4 h-4 text-[#C9A96E]" /> 5 Core Diagnostic Dimensions
           </h3>
 
-          <div className="space-y-4">
-            {dimensions.map((d) => (
-              <div key={d.name} className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E2D9C8] space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-[#050E1A]">
-                  <span className="font-['Outfit'] text-sm">{d.name}</span>
-                  <span className="font-mono text-sm">{d.score}%</span>
+          {dimensions.length > 0 ? (
+            <div className="space-y-4">
+              {dimensions.map((d) => (
+                <div key={d.name} className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E2D9C8] space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#050E1A]">
+                    <span className="font-['Outfit'] text-sm">{d.name}</span>
+                    <span className="font-mono text-sm">{d.score}%</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-[#FFFFFF] rounded-full overflow-hidden border border-[#E2D9C8]">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#071426] to-[#C9A96E] transition-all duration-500"
+                      style={{ width: `${d.score}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#475569] leading-relaxed font-medium">{d.description}</p>
                 </div>
-                <div className="w-full h-2.5 bg-[#FFFFFF] rounded-full overflow-hidden border border-[#E2D9C8]">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#071426] to-[#C9A96E] transition-all duration-500"
-                    style={{ width: `${d.score}%` }}
-                  />
-                </div>
-                <p className="text-[11px] text-[#475569] leading-relaxed font-medium">{d.description}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-[#475569] leading-relaxed font-medium">
+              Detailed evaluation dimensions will appear once the backend returns them for the completed interview session.
+            </p>
+          )}
         </div>
 
         {/* Strengths & Skill Gaps 2-Column Grid */}
@@ -248,13 +208,13 @@ export const Report = () => {
         )}
 
         {/* Real Turn-by-Turn Response Log Section */}
-        {reportData?.history && reportData.history.length > 0 && (
+        {historyTurns.length > 0 && (
           <div className="card-surface rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-[#E2D9C8] space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[#EFE8DC]">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-[#071426]" />
                 <h3 className="text-base font-bold text-[#050E1A] font-['Outfit']">
-                  Real Turn-by-Turn Interview Log ({reportData.history.length} Questions Evaluated)
+                  Real Turn-by-Turn Interview Log ({historyTurns.length} Questions Evaluated)
                 </h3>
               </div>
               <span className="text-xs font-mono text-[#475569]">
@@ -263,10 +223,11 @@ export const Report = () => {
             </div>
 
             <div className="space-y-4">
-              {reportData.history.map((turn, idx) => {
+              {historyTurns.map((turn, idx) => {
                 const isSkipped = turn.skipped || turn.answer === '[Question Skipped by Candidate]';
-                const score = turn.evaluation?.score || (isSkipped ? 50 : 85);
-                const scoreColor = score >= 80 ? 'text-[#2E7D32] bg-[#2E7D32]/10 border-[#2E7D32]/30' : score >= 60 ? 'text-[#D97706] bg-[#D97706]/10 border-[#D97706]/30' : 'text-[#DC2626] bg-[#DC2626]/10 border-[#DC2626]/30';
+                const score = turn.evaluation?.score ?? turn.evaluation?.overall_score ?? (isSkipped ? 50 : 0);
+                const normalizedScore = Math.max(0, Math.min(100, Math.round(score * 100)));
+                const scoreColor = normalizedScore >= 80 ? 'text-[#2E7D32] bg-[#2E7D32]/10 border-[#2E7D32]/30' : normalizedScore >= 60 ? 'text-[#D97706] bg-[#D97706]/10 border-[#D97706]/30' : 'text-[#DC2626] bg-[#DC2626]/10 border-[#DC2626]/30';
 
                 return (
                   <div
@@ -286,7 +247,7 @@ export const Report = () => {
                         )}
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-lg border font-bold ${scoreColor}`}>
-                        Score: {score}/100
+                        Score: {normalizedScore}/100
                       </span>
                     </div>
 
@@ -307,17 +268,17 @@ export const Report = () => {
                     {/* Detected Terms / Feedback */}
                     {turn.evaluation && (
                       <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-[#475569]">
-                        {turn.evaluation.detected_terms && turn.evaluation.detected_terms.length > 0 && (
+                        {turn.evaluation.technical_terms_detected && turn.evaluation.technical_terms_detected.length > 0 && (
                           <div className="flex items-center gap-1">
                             <span className="font-bold text-[#050E1A]">Keywords Identified:</span>
                             <span className="text-[#2E7D32] font-bold">
-                              {turn.evaluation.detected_terms.join(', ')}
+                              {turn.evaluation.technical_terms_detected.join(', ')}
                             </span>
                           </div>
                         )}
-                        {turn.evaluation.strengths && turn.evaluation.strengths.length > 0 && (
-                          <div className="text-[#2E7D32]">
-                            ✓ {turn.evaluation.strengths[0]}
+                        {turn.evaluation.recommended_difficulty && (
+                          <div className="text-[#071426] font-semibold">
+                            Next difficulty: {turn.evaluation.recommended_difficulty}
                           </div>
                         )}
                       </div>

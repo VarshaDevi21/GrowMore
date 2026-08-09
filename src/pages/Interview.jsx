@@ -42,35 +42,42 @@ export const Interview = () => {
   const [isScreenBlurred, setIsScreenBlurred] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const buildReportPayloadForStorage = useCallback(
+    (reportData = {}, extra = {}) => {
+      const historyEntries = Array.isArray(reportData?.history) ? reportData.history : (Array.isArray(reportData?.report?.history) ? reportData.report.history : []);
+      const curriculumDayValues = Array.from(
+        new Set(historyEntries.map((turn) => turn.curriculum_day).filter(Boolean))
+      );
+
+      const payload = {
+        candidate_id: candidate?.member?.id || 'CAND-001',
+        candidate_name: candidate?.member?.name || 'Candidate',
+        job_role: candidate?.member?.jobRole || 'AI Engineer',
+        difficulty: selectedDifficulty || 'Medium',
+        history: historyEntries,
+        curriculum_days_covered: curriculumDayValues.length > 0 ? curriculumDayValues : [],
+        ...extra,
+      };
+
+      if (reportData?.sessionId) payload.sessionId = reportData.sessionId;
+      if (reportData?.completed_at) payload.completed_at = reportData.completed_at;
+      if (reportData?.termination_reason) payload.termination_reason = reportData.termination_reason;
+      if (reportData?.overall_score != null) payload.overall_score = reportData.overall_score;
+      if (reportData?.feedback) payload.feedback = reportData.feedback;
+      if (reportData?.evaluation_dimensions) payload.evaluation_dimensions = reportData.evaluation_dimensions;
+      if (reportData?.report) payload.report = reportData.report;
+
+      return payload;
+    },
+    [candidate, selectedDifficulty]
+  );
+
   // Unified conclusion handler that guarantees navigation to /report
   const concludeToNormalWindow = useCallback(
     (reportData) => {
-      const fallbackReport = {
-        candidate_id: candidate?.member?.id || 'CAND-001',
-        candidate_name: candidate?.member?.name || 'Sarah Johnson',
-        job_role: candidate?.member?.jobRole || 'Senior Data Engineer',
-        difficulty: selectedDifficulty || 'Medium',
-        overall_score: 88,
-        curriculum_days_covered: [3, 5, 7, 10, 13, 15, 18, 20, 23, 28],
-        feedback: reportData?.feedback || {
-          summary: `Technical interview completed for ${candidate?.member?.name || 'Candidate'}. Diagnostic evaluation calculated across 10 cross-module probes.`,
-          strengths: [
-            'Strong grasp of vector database distance metrics and hybrid retrieval strategies',
-            'Clear articulation of asynchronous event handling and streaming token delivery in FastAPI',
-            'Solid understanding of Model Context Protocol (MCP) tool decoupling',
-          ],
-          gaps: [
-            'Deepen understanding of reciprocal rank fusion (RRF) smoothing constants',
-            'Review Docker container isolation policies and AST schema healing',
-          ],
-          next: [
-            'Practice building custom MCP tools with Pydantic validation',
-            'Strengthen prompt injection defenses and Docker runtime security',
-          ],
-        },
-      };
-
-      const finalReportToSave = reportData ? { ...fallbackReport, ...reportData } : fallbackReport;
+      const finalReportToSave = reportData
+        ? { ...buildReportPayloadForStorage(reportData), ...reportData }
+        : buildReportPayloadForStorage();
 
       // Always persist to localStorage for Report component lookup and history tracking
       localStorage.setItem('last_interview_report', JSON.stringify(finalReportToSave));
@@ -136,7 +143,7 @@ export const Interview = () => {
         setTimeout(() => setAvatarState('listening'), 1800);
       } catch (err) {
         console.error('Failed to start interview session:', err);
-        setApiError('Failed to connect to API server. Operating in offline resilient mode.');
+        setApiError('Failed to connect to the backend. Please retry the interview.');
       } finally {
         setIsLoading(false);
       }
@@ -158,20 +165,16 @@ export const Interview = () => {
 
       try {
         const finalResponse = await postInterviewApi(reportPayload);
-        const report = finalResponse.report || {
-          candidate_id: candidate?.member?.id,
-          candidate_name: candidate?.member?.name,
-          job_role: candidate?.member?.jobRole,
-          overall_score: 85,
+        const report = buildReportPayloadForStorage(finalResponse.report || finalResponse, {
           termination_reason: reason,
-          feedback: finalResponse.feedback,
-          curriculum_days_covered: [3, 7, 10, 13, 18, 23, 28],
-        };
+          feedback: finalResponse.feedback || (finalResponse.report && finalResponse.report.feedback),
+          history,
+        });
 
         concludeToNormalWindow(report);
       } catch (err) {
         console.error('Error finalizing report:', err);
-        concludeToNormalWindow(null);
+        setApiError('The backend did not return a final report. Please retry the interview.');
       }
     },
     [candidate, sessionId, answerText, selectedDifficulty, violationsCount, concludeToNormalWindow]
@@ -345,15 +348,10 @@ export const Interview = () => {
           violations_count: violationsCount,
         });
 
-        const reportToStore = response.report || {
-          candidate_id: candidate.member.id,
-          candidate_name: candidate.member.name,
-          job_role: candidate.member.jobRole,
-          difficulty: selectedDifficulty,
-          overall_score: 88,
-          feedback: response.feedback,
-          curriculum_days_covered: [3, 5, 7, 10, 13, 15, 18, 20, 23, 28],
-        };
+        const reportToStore = buildReportPayloadForStorage(response.report || response, {
+          feedback: response.feedback || (response.report && response.report.feedback),
+          history: updatedHistory,
+        });
 
         setAvatarState('encouraging');
         setTimeout(() => {
@@ -361,8 +359,7 @@ export const Interview = () => {
         }, 800);
       } catch (err) {
         console.error('Error finalizing report:', err);
-        setApiError('API error occurred during turn submission. Concluding session.');
-        concludeToNormalWindow(null);
+        setApiError('The backend did not return a final report. Please retry the interview.');
       }
       return;
     }
@@ -378,15 +375,10 @@ export const Interview = () => {
       });
 
       if (response.done || response.is_complete) {
-        const reportToStore = response.report || {
-          candidate_id: candidate.member.id,
-          candidate_name: candidate.member.name,
-          job_role: candidate.member.jobRole,
-          difficulty: selectedDifficulty,
-          overall_score: 88,
-          feedback: response.feedback,
-          curriculum_days_covered: [3, 5, 7, 10, 13, 15, 18, 20, 23, 28],
-        };
+        const reportToStore = buildReportPayloadForStorage(response.report || response, {
+          feedback: response.feedback || (response.report && response.report.feedback),
+          history: updatedHistory,
+        });
         concludeToNormalWindow(reportToStore);
         return;
       }
@@ -404,7 +396,7 @@ export const Interview = () => {
       }, 1000);
     } catch (err) {
       console.error('Failed to submit answer:', err);
-      setApiError('Network connection issue. System operating with local evaluation fallback.');
+      setApiError('The backend did not return the next interview step. Please retry.');
       setAvatarState('listening');
     }
   };
@@ -440,15 +432,10 @@ export const Interview = () => {
           violations_count: violationsCount,
         });
 
-        const reportToStore = response.report || {
-          candidate_id: candidate.member.id,
-          candidate_name: candidate.member.name,
-          job_role: candidate.member.jobRole,
-          difficulty: selectedDifficulty,
-          overall_score: 80,
-          feedback: response.feedback,
-          curriculum_days_covered: [3, 5, 7, 10, 13, 15, 18, 20, 23, 28],
-        };
+        const reportToStore = buildReportPayloadForStorage(response.report || response, {
+          feedback: response.feedback || (response.report && response.report.feedback),
+          history: updatedHistory,
+        });
 
         setAvatarState('encouraging');
         setTimeout(() => {
@@ -456,7 +443,7 @@ export const Interview = () => {
         }, 800);
       } catch (err) {
         console.error('Error finalizing report on skip:', err);
-        concludeToNormalWindow(null);
+        setApiError('The backend did not return a final report after skipping. Please retry.');
       }
       return;
     }
@@ -487,7 +474,7 @@ export const Interview = () => {
       }, 800);
     } catch (err) {
       console.error('Failed to skip question:', err);
-      setApiError('API call failed during question skip.');
+      setApiError('The backend did not return the next interview step after skipping. Please retry.');
       setAvatarState('listening');
     }
   };

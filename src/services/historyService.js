@@ -6,68 +6,6 @@
 const HISTORY_STORAGE_KEY = 'growmore_interview_history';
 
 /**
- * Seed historical sessions when candidate has no existing history
- */
-const getInitialSeedHistory = (candidateId) => {
-  return [
-    {
-      id: `attempt-seed-1-${candidateId}`,
-      candidate_id: candidateId,
-      date: '2026-08-08',
-      tier: 'Medium',
-      score: 88,
-      questionsCount: 10,
-      daysCovered: [3, 7, 10, 13, 18, 23, 28],
-      summary: 'Demonstrated strong command of vector similarity distance metrics and FastAPI SSE streaming token delivery.',
-      status: 'PASSED',
-      strengths: [
-        'Vector similarity search & HNSW index trade-offs',
-        'FastAPI asynchronous event handling and streaming response architecture',
-        'Bidirectional Model Context Protocol (MCP) tool decoupling',
-      ],
-      gaps: [
-        'Deepen understanding of Reciprocal Rank Fusion (RRF) smoothing constants',
-        'Review Docker container isolation policies and AST schema healing under edge inputs',
-      ],
-    },
-    {
-      id: `attempt-seed-2-${candidateId}`,
-      candidate_id: candidateId,
-      date: '2026-08-05',
-      tier: 'Medium',
-      score: 79,
-      questionsCount: 10,
-      daysCovered: [1, 4, 8, 12, 16, 21],
-      summary: 'Solid core Python environment setup; recommended revisiting RRF smoothing constants for hybrid retrieval.',
-      status: 'PASSED',
-      strengths: [
-        'Python virtual environment isolation & dependency locking',
-        'Basic dense vector storage in ChromaDB',
-      ],
-      gaps: [
-        'gVisor container runtime security guardrails',
-      ],
-    },
-    {
-      id: `attempt-seed-3-${candidateId}`,
-      candidate_id: candidateId,
-      date: '2026-07-28',
-      tier: 'Easy',
-      score: 92,
-      questionsCount: 10,
-      daysCovered: [1, 2, 3, 4, 5, 7],
-      summary: 'High accuracy across foundational tooling, local Ollama execution, and environment setup.',
-      status: 'PASSED',
-      strengths: [
-        'Environment configuration & environment variables',
-        'Local model execution via Ollama CLI',
-      ],
-      gaps: [],
-    },
-  ];
-};
-
-/**
  * Get full history map for all candidates or filter by candidate ID
  * @param {string} candidateId - Active candidate ID
  * @returns {Array<object>} List of evaluation attempts
@@ -97,17 +35,10 @@ export const getCandidateHistory = (candidateId) => {
       }
     }
 
-    if (candidateHistory.length === 0) {
-      const seed = getInitialSeedHistory(candidateId);
-      allHistory = [...seed, ...allHistory];
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(allHistory));
-      return seed;
-    }
-
     return candidateHistory;
   } catch (error) {
     console.error('Error reading candidate history:', error);
-    return getInitialSeedHistory(candidateId);
+    return [];
   }
 };
 
@@ -147,20 +78,22 @@ export const saveInterviewReportToHistory = (report) => {
  * Format raw evaluation report into history item structure
  */
 const formatReportToHistoryItem = (report) => {
-  const score = report.overall_score || report.score || 85;
+  const reportPayload = report.report || report;
+  const feedback = reportPayload.feedback || report.feedback || {};
+  const score = reportPayload.overall_score ?? report.overall_score ?? reportPayload.score ?? report.score ?? 0;
   return {
-    id: report.sessionId || report.id || `attempt-${Date.now()}`,
-    candidate_id: report.candidate_id || report.candidateId || 'CAND-001',
-    date: report.date || new Date().toISOString().split('T')[0],
-    tier: report.difficulty || report.tier || 'Medium',
-    score: score,
-    questionsCount: report.history?.length || report.questionsCount || 10,
-    daysCovered: report.curriculum_days_covered || [3, 7, 10, 13, 18, 23, 28],
-    summary: report.feedback?.summary || report.summary || 'Technical diagnostic evaluation completed cleanly.',
+    id: reportPayload.sessionId || report.sessionId || reportPayload.id || report.id || `attempt-${Date.now()}`,
+    candidate_id: reportPayload.candidate_id || report.candidate_id || reportPayload.candidateId || report.candidateId || 'CAND-001',
+    date: reportPayload.date || report.date || new Date().toISOString().split('T')[0],
+    tier: reportPayload.difficulty || report.difficulty || reportPayload.tier || report.tier || 'Medium',
+    score,
+    questionsCount: reportPayload.history?.length || report.history?.length || reportPayload.questionsCount || report.questionsCount || 0,
+    daysCovered: reportPayload.curriculum_days_covered || report.curriculum_days_covered || [],
+    summary: feedback.summary || reportPayload.summary || report.summary || 'Interview completed with backend feedback.',
     status: score >= 70 ? 'PASSED' : 'NEEDS_IMPROVEMENT',
-    strengths: report.feedback?.strengths || report.strengths || [],
-    gaps: report.feedback?.gaps || report.gaps || [],
-    next: report.feedback?.next || report.next || [],
+    strengths: feedback.strengths || reportPayload.strengths || report.strengths || [],
+    gaps: feedback.gaps || reportPayload.gaps || report.gaps || [],
+    next: feedback.next || reportPayload.next || report.next || [],
   };
 };
 

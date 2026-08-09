@@ -38,14 +38,13 @@ export const submitAnswer = async (sessionId, message) => {
 };
 
 /**
- * Core fetcher for POST /api/interview supporting exact TECHNICAL SPEC.md contract
- * with resilient local fallback for offline/disconnected environments.
+ * Core fetcher for POST /api/interview.
+ * The backend is the single source of truth for interview state, reporting, and feedback.
  */
 export const postInterviewApi = async (payload) => {
   console.log('========== POST /api/interview ==========');
   console.log(payload);
 
-  // Normalize payload for Technical Spec API contract
   const normalizedPayload = { ...payload };
   if (!normalizedPayload.sessionId && normalizedPayload.session_id) {
     normalizedPayload.sessionId = normalizedPayload.session_id;
@@ -66,63 +65,35 @@ export const postInterviewApi = async (payload) => {
     console.log('API STATUS:', response.status);
 
     if (!response.ok) {
-      throw new Error(`API error: HTTP status ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`API error: HTTP status ${response.status}${errorText ? ` - ${errorText}` : ''}`);
     }
 
     const data = await response.json();
     console.log('API RESPONSE:', data);
-    return data;
+    return normalizeInterviewResponse(normalizedPayload, data);
   } catch (error) {
     console.error('API FAILED:', error);
-    console.log('Using LOCAL interview engine fallback per Technical Spec...');
-    return getLocalInterviewFallback(normalizedPayload);
+    throw error;
   }
 };
 
-/**
- * Local fallback engine compliant with TECHNICAL SPEC.md schema
- */
-const getLocalInterviewFallback = (payload) => {
-  const isStart = Boolean(payload.candidate || payload.action === 'start');
-  const sessionId = payload.sessionId || `sess-${Date.now()}`;
-
-  if (isStart) {
-    const candidateName = payload.candidate?.member?.name || payload.candidate?.name || 'Candidate';
-    return {
-      sessionId,
-      reply: `Welcome ${candidateName}. Let's begin your technical interview.\n\nQuestion 1: Explain the importance of Python virtual environments and how you manage isolated dependencies.`,
-      done: false,
-      question_number: 1,
-      total_questions: 10,
-      curriculum_day: 1,
-      module: 'M1: Environment & Tooling',
-      topic: 'Python Virtual Environments',
-      difficulty: 'Medium',
-      question: 'Explain the importance of Python virtual environments and how you manage isolated dependencies.',
-    };
+const normalizeInterviewResponse = (payload, response) => {
+  if (!response || typeof response !== 'object') {
+    return response;
   }
 
-  // Turn response fallback
-  const message = payload.message || payload.answer || '';
-  const isSkipped = message.includes('[Question Skipped by Candidate]');
+  const normalizedResponse = { ...response };
+  const sessionId = response.sessionId || response.session_id || payload.sessionId || payload.session_id;
 
-  return {
-    sessionId,
-    reply: isSkipped
-      ? "Understood. Moving directly to our next milestone: How do you configure ChromaDB vector distance metrics (Cosine vs Dot Product)?"
-      : "Building on your response, let's explore Model Context Protocol (MCP): How do you structure JSON-RPC 2.0 tool definitions?",
-    done: false,
-    question_number: 2,
-    total_questions: 10,
-    curriculum_day: 23,
-    module: 'M6: Agentic AI & MCP',
-    topic: 'Model Context Protocol',
-    difficulty: 'Medium',
-    question: 'How do you structure JSON-RPC 2.0 tool definitions in MCP?',
-    evaluation: {
-      score: isSkipped ? 50 : 85,
-      strengths: isSkipped ? ['Paced progress'] : ['Clear architectural terms'],
-      weaknesses: isSkipped ? ['Skipped topic'] : [],
-    },
-  };
+  if (sessionId) {
+    normalizedResponse.sessionId = sessionId;
+  }
+
+  if (payload.candidate && !normalizedResponse.candidate) {
+    normalizedResponse.candidate = payload.candidate;
+  }
+
+  return normalizedResponse;
 };
+
