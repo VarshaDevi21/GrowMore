@@ -5,13 +5,16 @@
 
 import { getCandidateById, getCandidateDayStatus } from '../data/candidate';
 
+const API_URL = import.meta.env.VITE_API_URL;
+const buildApiUrl = (path) => `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
 /**
  * Fetch available Model Context Protocol (MCP) server tools
  * @returns {Promise<Array<{name: string, description: string, parameters: object}>>}
  */
 export const fetchMcpTools = async () => {
   try {
-    const response = await fetch('/api/mcp/tools', {
+    const response = await fetch(buildApiUrl('/api/mcp/tools'), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +41,7 @@ export const fetchMcpTools = async () => {
  */
 export const invokeMcpTool = async (toolName, params = {}) => {
   try {
-    const response = await fetch('/api/mcp/invoke', {
+    const response = await fetch(buildApiUrl('/api/mcp/invoke'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +77,7 @@ export const invokeMcpTool = async (toolName, params = {}) => {
  */
 export const runAgenticWorkflow = async (taskPrompt, candidateId) => {
   try {
-    const response = await fetch('/api/agent/orchestrate', {
+    const response = await fetch(buildApiUrl('/api/agent/orchestrate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

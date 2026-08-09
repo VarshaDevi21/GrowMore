@@ -15,6 +15,9 @@ import {
 
 export { fetchMcpTools, invokeMcpTool, runAgenticWorkflow, getAgenticProgress, getPhase6Progress };
 
+const API_URL = import.meta.env.VITE_API_URL;
+const buildApiUrl = (path) => `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
 /**
  * Start an interview session per Technical Spec:
  * POST /api/interview { sessionId, candidate }
@@ -54,7 +57,7 @@ export const postInterviewApi = async (payload) => {
   }
 
   try {
-    const response = await fetch('/api/interview', {
+    const response = await fetch(buildApiUrl('/api/interview'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
