@@ -1,111 +1,112 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    --bg-cream: #FAF7F0;
+    --bg-cream-card: #FFFFFF;
+    --bg-cream-subtle: #F3EEE3;
+    --color-navy: #071426;
+    --color-navy-dark: #050E1A;
+    --color-navy-secondary: #0B1F3A;
+    --color-navy-card: #16345C;
+    --color-gold: #C9A96E;
+    --color-gold-hover: #D8BA82;
+    --text-navy: #050E1A;
+    --text-navy-body: #1E293B;
+    --text-navy-muted: #334155;
+    --border-warm: #E2D9C8;
+    --border-subtle: #EFE8DC;
+
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-cream);
+    color: var(--text-navy);
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.025em;
+    color: #050E1A;
+    font-weight: 800;
+  }
+
+  p {
+    color: #1E293B;
+    font-weight: 450;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    background-color: #FAF7F0;
+    color: #050E1A;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar in cream + navy theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FAF7F0;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #D1C4AC;
+    border-radius: 4px;
+    border: 2px solid #FAF7F0;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #071426;
   }
 }
 
-body {
-  margin: 0;
+/* Cream + Navy surface utility classes */
+.card-surface {
+  background: #FFFFFF;
+  border: 1px solid #E2D9C8;
+  box-shadow: 0 4px 20px -2px rgba(7, 20, 38, 0.06), 0 2px 6px -1px rgba(7, 20, 38, 0.03);
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+.card-surface-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.card-surface-hover:hover {
+  border-color: #C9A96E;
+  box-shadow: 0 12px 30px -4px rgba(7, 20, 38, 0.1), 0 4px 10px -2px rgba(201, 169, 110, 0.2);
+  transform: translateY(-2px);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.btn-navy-primary {
+  background-color: #071426;
+  color: #FFFDF7;
+  transition: all 0.2s ease;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.btn-navy-primary:hover {
+  background-color: #16345C;
+  color: #FFFDF7;
+  box-shadow: 0 8px 20px -4px rgba(7, 20, 38, 0.25);
+  transform: translateY(-1px);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Subtle cream grid pattern */
+.bg-cream-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(7, 20, 38, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(7, 20, 38, 0.04) 1px, transparent 1px);
+}
+
+.bg-cream-radial {
+  background: radial-gradient(circle at 50% 0%, rgba(201, 169, 110, 0.15) 0%, rgba(250, 247, 240, 0) 70%);
 }
