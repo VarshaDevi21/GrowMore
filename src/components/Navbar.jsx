@@ -91,12 +91,12 @@ export const Navbar = () => {
                   <span className="text-lg font-black tracking-tight text-[#050E1A] font-['Outfit']">
                     GrowMore
                   </span>
-                  <span className="text-[10px] font-mono uppercase bg-[#071426] text-[#FFFDF7] px-1.5 py-0.5 rounded font-bold">
-                    Agent
+                  <span className="text-[10px] font-mono uppercase bg-[#C9A96E] text-[#071426] px-1.5 py-0.5 rounded font-bold">
+                    #ABTalks
                   </span>
                 </div>
                 <span className="text-[11px] text-[#475569] font-medium tracking-wide">
-                  AI Interview Agent
+                  AI Interview Agent · #ABTalks Edition
                 </span>
               </div>
             </Link>

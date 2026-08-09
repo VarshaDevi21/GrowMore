@@ -94,7 +94,7 @@ export const Landing = () => {
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFFFFF] border border-[#E2D9C8] shadow-sm">
                   <Sparkles className="w-3.5 h-3.5 text-[#C9A96E]" />
                   <span className="text-xs font-bold text-[#050E1A] font-mono">
-                    31-Day AI Cohort · Adaptive Technical Evaluation
+                    #ABTalks Edition · 31-Day AI Cohort Technical Evaluation
                   </span>
                   <span className="w-2 h-2 rounded-full bg-[#2E7D32]"></span>
                 </div>
